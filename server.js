@@ -5,11 +5,16 @@ const { MongoClient } = require('mongodb');
 const app = express();
 const PORT = 5000;
 
-app.use(cors());
+app.use(cors(
+
+));
 app.use(express.json());
 
 const uri = 'mongodb+srv://ranjitdas:ranjitdas@ranjitdas.unf745o.mongodb.net/?retryWrites=true&w=majority&appName=ranjitdas';
-const client = new MongoClient(uri);
+const client = new MongoClient(uri,{
+  tls: true,
+  tlsAllowInvalidCertificates: true
+});
 const dbName = 'ranjitdas';
 
 // Route: Get all earthquake data
