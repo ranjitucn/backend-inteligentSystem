@@ -19,6 +19,7 @@ app.get('/api/all-earthquakes', async (req, res) => {
     const db = client.db(dbName);
     const collection = db.collection('earthquakes');
     const allData = await collection.find({}).toArray();
+    console.log(allData);
     return res.json(allData);
   } catch (err) {
     console.error(err);
@@ -49,11 +50,12 @@ app.post('/api/earthquakes', async (req, res) => {
         $lte: parseFloat(endLon)
       }
     }).toArray();
+    console.log(results);
 
-    res.json(results);
+    return res.json(results);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Error querying database');
+    return res.status(500).send('Error querying database');
   }
 });
 
