@@ -5,13 +5,11 @@ const { MongoClient } = require('mongodb');
 const app = express();
 const PORT = 5000;
 
-app.use(cors(
-
-));
+app.use(cors());
 app.use(express.json());
 
 const uri = 'mongodb+srv://ranjitdas:ranjitdas@ranjitdas.unf745o.mongodb.net/?retryWrites=true&w=majority&appName=ranjitdas';
-const client = new MongoClient(uri,{
+const client = new MongoClient(uri, {
   tls: true,
   tlsAllowInvalidCertificates: true
 });
@@ -36,13 +34,13 @@ app.get('/api/all-earthquakes', async (req, res) => {
 app.post('/api/earthquakes', async (req, res) => {
   const { startTime, endTime, startLat, endLat, startLon, endLon } = req.body;
 
+  // Usa nuevas variables para almacenar los valores transformados
+  const startLatVal = Math.abs(parseFloat(startLat));
+  const endLatVal = Math.abs(parseFloat(endLat));
+  const startLonVal = Math.abs(parseFloat(startLon));
+  const endLonVal = Math.abs(parseFloat(endLon));
+
   try {
-
-    startLat = Math.abs(parseFloat(startLat));
-    endLat = Math.abs(parseFloat(endLat));
-    startLon = Math.abs(parseFloat(startLon));
-    endLon = Math.abs(parseFloat(endLon));
-
     await client.connect();
     const db = client.db(dbName);
     const collection = db.collection('earthquakes');
@@ -53,12 +51,12 @@ app.post('/api/earthquakes', async (req, res) => {
         $lte: new Date(endTime)
       },
       latitude: {
-        $gte: parseFloat(startLat),
-        $lte: parseFloat(endLat)
+        $gte: startLatVal,
+        $lte: endLatVal
       },
       longitude: {
-        $gte: parseFloat(startLon),
-        $lte: parseFloat(endLon)
+        $gte: startLonVal,
+        $lte: endLonVal
       }
     }).toArray();
     console.log(results);
