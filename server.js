@@ -37,6 +37,12 @@ app.post('/api/earthquakes', async (req, res) => {
   const { startTime, endTime, startLat, endLat, startLon, endLon } = req.body;
 
   try {
+
+    startLat = Math.abs(parseFloat(startLat));
+    endLat = Math.abs(parseFloat(endLat));
+    startLon = Math.abs(parseFloat(startLon));
+    endLon = Math.abs(parseFloat(endLon));
+
     await client.connect();
     const db = client.db(dbName);
     const collection = db.collection('earthquakes');
