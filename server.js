@@ -51,42 +51,41 @@ app.post('/api/earthquakes', async (req, res) => {
   const endDay = endDate.getUTCDate();
 
   console.log('Valores recibidos:', {
-    start: { year: startYear, month: startMonth, day: startDay },
-    end: { year: endYear, month: endMonth, day: endDay },
-    startLat: startLatVal,
-    endLat: endLatVal,
-    startLon: startLonVal,
-    endLon: endLonVal
+    start: { Year: startYear, Month: startMonth, Day: startDay },
+    end: { Year: endYear, Month: endMonth, Day: endDay },
+    Lat: { start: startLatVal, end: endLatVal },
+    Long: { start: startLonVal, end: endLonVal }
   });
+
 
   try {
     await client.connect();
     const db = client.db(dbName);
     const collection = db.collection('earthquakes');
-
     const results = await collection.find({
       $and: [
         {
           $or: [
-            { year: { $gt: startYear, $lt: endYear } },
-            { year: startYear, month: { $gt: startMonth } },
-            { year: startYear, month: startMonth, day: { $gte: startDay } },
-            { year: endYear, month: { $lt: endMonth } },
-            { year: endYear, month: endMonth, day: { $lte: endDay } }
+            { Year: { $gt: startYear, $lt: endYear } },
+            { Year: startYear, Month: { $gt: startMonth } },
+            { Year: startYear, Month: startMonth, Day: { $gte: startDay } },
+            { Year: endYear, Month: { $lt: endMonth } },
+            { Year: endYear, Month: endMonth, Day: { $lte: endDay } }
           ]
         },
         {
-          latitude: {
+          Lat: {
             $gte: startLatVal,
             $lte: endLatVal
           },
-          longitude: {
+          Long: {
             $gte: startLonVal,
             $lte: endLonVal
           }
         }
       ]
     }).toArray();
+
 
     console.log(results);
     return res.json(results);
