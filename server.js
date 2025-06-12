@@ -34,20 +34,26 @@ app.get('/api/all-earthquakes', async (req, res) => {
 app.post('/api/earthquakes', async (req, res) => {
   const { startTime, endTime, startLat, endLat, startLon, endLon } = req.body;
 
-  // Usa nuevas variables para almacenar los valores transformados
   const startLatVal = Math.abs(parseFloat(startLat));
   const endLatVal = Math.abs(parseFloat(endLat));
   const startLonVal = Math.abs(parseFloat(startLon));
   const endLonVal = Math.abs(parseFloat(endLon));
 
-  console.log('Values received:', {
-    startTime,
-    endTime,
+  // Parse las fechas al formato de solo día (ignorar hora)
+  const startDate = new Date(startTime);
+  startDate.setHours(0, 0, 0, 0);
+
+  const endDate = new Date(endTime);
+  endDate.setHours(23, 59, 59, 999);
+
+  console.log('Valores recibidos:', {
+    startTime: startDate,
+    endTime: endDate,
     startLat: startLatVal,
     endLat: endLatVal,
     startLon: startLonVal,
     endLon: endLonVal
-  })
+  });
 
   try {
     await client.connect();
@@ -56,8 +62,8 @@ app.post('/api/earthquakes', async (req, res) => {
 
     const results = await collection.find({
       time: {
-        $gte: new Date(startTime),
-        $lte: new Date(endTime)
+        $gte: startDate,
+        $lte: endDate
       },
       latitude: {
         $gte: startLatVal,
@@ -68,14 +74,15 @@ app.post('/api/earthquakes', async (req, res) => {
         $lte: endLonVal
       }
     }).toArray();
-    console.log(results);
 
+    console.log(results);
     return res.json(results);
   } catch (err) {
     console.error(err);
     return res.status(500).send('Error querying database');
   }
 });
+
 
 // Run the server
 app.listen(PORT, () => {
