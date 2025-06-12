@@ -39,16 +39,20 @@ app.post('/api/earthquakes', async (req, res) => {
   const startLonVal = Math.abs(parseFloat(startLon));
   const endLonVal = Math.abs(parseFloat(endLon));
 
-  // Parse las fechas al formato de solo día (ignorar hora)
   const startDate = new Date(startTime);
-  startDate.setHours(0, 0, 0, 0);
-
   const endDate = new Date(endTime);
-  endDate.setHours(23, 59, 59, 999);
+
+  const startYear = startDate.getUTCFullYear();
+  const startMonth = startDate.getUTCMonth() + 1;
+  const startDay = startDate.getUTCDate();
+
+  const endYear = endDate.getUTCFullYear();
+  const endMonth = endDate.getUTCMonth() + 1;
+  const endDay = endDate.getUTCDate();
 
   console.log('Valores recibidos:', {
-    startTime: startDate,
-    endTime: endDate,
+    start: { year: startYear, month: startMonth, day: startDay },
+    end: { year: endYear, month: endMonth, day: endDay },
     startLat: startLatVal,
     endLat: endLatVal,
     startLon: startLonVal,
@@ -61,18 +65,27 @@ app.post('/api/earthquakes', async (req, res) => {
     const collection = db.collection('earthquakes');
 
     const results = await collection.find({
-      time: {
-        $gte: startDate,
-        $lte: endDate
-      },
-      latitude: {
-        $gte: startLatVal,
-        $lte: endLatVal
-      },
-      longitude: {
-        $gte: startLonVal,
-        $lte: endLonVal
-      }
+      $and: [
+        {
+          $or: [
+            { year: { $gt: startYear, $lt: endYear } },
+            { year: startYear, month: { $gt: startMonth } },
+            { year: startYear, month: startMonth, day: { $gte: startDay } },
+            { year: endYear, month: { $lt: endMonth } },
+            { year: endYear, month: endMonth, day: { $lte: endDay } }
+          ]
+        },
+        {
+          latitude: {
+            $gte: startLatVal,
+            $lte: endLatVal
+          },
+          longitude: {
+            $gte: startLonVal,
+            $lte: endLonVal
+          }
+        }
+      ]
     }).toArray();
 
     console.log(results);
@@ -82,6 +95,7 @@ app.post('/api/earthquakes', async (req, res) => {
     return res.status(500).send('Error querying database');
   }
 });
+
 
 
 // Run the server
