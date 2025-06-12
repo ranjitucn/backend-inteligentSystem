@@ -34,10 +34,11 @@ app.get('/api/all-earthquakes', async (req, res) => {
 app.post('/api/earthquakes', async (req, res) => {
   const { startTime, endTime, startLat, endLat, startLon, endLon } = req.body;
 
-  const startLatVal = parseFloat(startLat);
-  const endLatVal = parseFloat(endLat);
-  const startLonVal = parseFloat(startLon);
-  const endLonVal = parseFloat(endLon);
+  const startLatVal = Math.abs(parseFloat(startLat));
+  const endLatVal = Math.abs(parseFloat(endLat));
+  const startLonVal = Math.abs(parseFloat(startLon));
+  const endLonVal = Math.abs(parseFloat(endLon));
+
 
   const startDate = new Date(startTime);
   const endDate = new Date(endTime);
