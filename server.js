@@ -34,58 +34,68 @@ app.get('/api/all-earthquakes', async (req, res) => {
 app.post('/api/earthquakes', async (req, res) => {
   const { startTime, endTime, startLat, endLat, startLon, endLon } = req.body;
 
-  const startLatVal = Math.abs(parseFloat(startLat));
-  const endLatVal = Math.abs(parseFloat(endLat));
-  const startLonVal = Math.abs(parseFloat(startLon));
-  const endLonVal = Math.abs(parseFloat(endLon));
+  const startLatVal = parseFloat(startLat);
+  const endLatVal = parseFloat(endLat);
+  const startLonVal = parseFloat(startLon);
+  const endLonVal = parseFloat(endLon);
 
   const startDate = new Date(startTime);
   const endDate = new Date(endTime);
 
-  const startYear = startDate.getUTCFullYear();
-  const startMonth = startDate.getUTCMonth() + 1;
-  const startDay = startDate.getUTCDate();
-
-  const endYear = endDate.getUTCFullYear();
-  const endMonth = endDate.getUTCMonth() + 1;
-  const endDay = endDate.getUTCDate();
-
   console.log('Valores recibidos:', {
-    start: { Year: startYear, Month: startMonth, Day: startDay },
-    end: { Year: endYear, Month: endMonth, Day: endDay },
+    start: {
+      Year: startDate.getUTCFullYear(),
+      Month: startDate.getUTCMonth() + 1,
+      Day: startDate.getUTCDate()
+    },
+    end: {
+      Year: endDate.getUTCFullYear(),
+      Month: endDate.getUTCMonth() + 1,
+      Day: endDate.getUTCDate()
+    },
     Lat: { start: startLatVal, end: endLatVal },
     Long: { start: startLonVal, end: endLonVal }
   });
-
 
   try {
     await client.connect();
     const db = client.db(dbName);
     const collection = db.collection('earthquakes');
-    const results = await collection.find({
-      $and: [
-        {
-          $or: [
-            { Year: { $gt: startYear, $lt: endYear } },
-            { Year: startYear, Month: { $gt: startMonth } },
-            { Year: startYear, Month: startMonth, Day: { $gte: startDay } },
-            { Year: endYear, Month: { $lt: endMonth } },
-            { Year: endYear, Month: endMonth, Day: { $lte: endDay } }
-          ]
-        },
-        {
-          Lat: {
-            $gte: startLatVal,
-            $lte: endLatVal
-          },
-          Long: {
-            $gte: startLonVal,
-            $lte: endLonVal
+
+    const results = await collection.aggregate([
+      {
+        $addFields: {
+          fullDate: {
+            $dateFromParts: {
+              year: "$Year",
+              month: "$Month",
+              day: "$Day",
+              hour: "$Hr",
+              minute: "$mn",
+              second: {
+                $toInt: "$Sec"  // Si Sec puede ser decimal, usa `$toDouble` o `$round`
+              }
+            }
           }
         }
-      ]
-    }).toArray();
-
+      },
+      {
+        $match: {
+          fullDate: {
+            $gte: startDate,
+            $lte: endDate
+          },
+          Lat: {
+            $gte: Math.min(startLatVal, endLatVal),
+            $lte: Math.max(startLatVal, endLatVal)
+          },
+          Long: {
+            $gte: Math.min(startLonVal, endLonVal),
+            $lte: Math.max(startLonVal, endLonVal)
+          }
+        }
+      }
+    ]).toArray();
 
     console.log(results);
     return res.json(results);
